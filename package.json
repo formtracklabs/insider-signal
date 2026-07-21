@@ -5,7 +5,8 @@
   "main": "run.js",
   "scripts": {
     "start": "node run.js",
-    "lookup": "node lookup-cli.js"
+    "lookup": "node lookup-cli.js",
+    "report": "node report-cli.js"
   },
   "license": "MIT"
 }

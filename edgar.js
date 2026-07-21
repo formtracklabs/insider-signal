@@ -59,7 +59,11 @@ async function findFilingXmlUrl(indexUrl) {
 }
 
 function xmlTag(xml, tag) {
-  const m = xml.match(new RegExp(`<${tag}>\\s*<value>([\\s\\S]*?)<\\/value>\\s*<\\/${tag}>`));
+  // Between </value> and the closing tag there is sometimes a <footnoteId/>
+  // (confirmed live: real filings attach footnotes to transactionShares) --
+  // matching only whitespace there silently dropped the share count on any
+  // footnoted transaction. Anything is allowed there now, non-greedily.
+  const m = xml.match(new RegExp(`<${tag}>\\s*<value>([\\s\\S]*?)<\\/value>[\\s\\S]*?<\\/${tag}>`));
   return m ? m[1].trim() : null;
 }
 function xmlSimple(xml, tag) {
@@ -115,4 +119,30 @@ async function fetchHistoricalPattern(ownerCik) {
   };
 }
 
-module.exports = { fetchCurrentForm4Filings, parseFiling, fetchHistoricalPattern };
+/**
+ * The last N individual Form 4 filings for a person, as index URLs ready
+ * for parseFiling() -- this is the piece fetchHistoricalPattern() doesn't
+ * provide (it only returns dates/counts), and the missing link that made
+ * the full paid report impossible to generate with one command.
+ */
+async function fetchRecentForm4IndexUrls(ownerCik, limit = 10) {
+  const cik = String(ownerCik).padStart(10, '0');
+  const res = await get(`https://data.sec.gov/submissions/CIK${cik}.json`);
+  const data = await res.json();
+  const recent = data.filings.recent;
+  const cikNoLeadingZeros = String(Number(ownerCik));
+
+  const urls = [];
+  for (let i = 0; i < recent.form.length && urls.length < limit; i++) {
+    if (recent.form[i] !== '4') continue;
+    const accession = recent.accessionNumber[i];
+    const noDash = accession.replace(/-/g, '');
+    urls.push({
+      filingDate: recent.filingDate[i],
+      indexUrl: `https://www.sec.gov/Archives/edgar/data/${cikNoLeadingZeros}/${noDash}/${accession}-index.htm`
+    });
+  }
+  return urls;
+}
+
+module.exports = { fetchCurrentForm4Filings, parseFiling, fetchHistoricalPattern, fetchRecentForm4IndexUrls };

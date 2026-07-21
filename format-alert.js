@@ -35,4 +35,4 @@ function formatAlert(filing, history) {
   return lines.join('\n');
 }
 
-module.exports = { formatAlert };
+module.exports = { formatAlert, TXN_LABELS };
