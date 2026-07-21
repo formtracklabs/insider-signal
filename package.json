@@ -1,0 +1,11 @@
+{
+  "name": "insider-signal",
+  "version": "0.1.0",
+  "description": "Pairs every SEC Form 4 insider filing with that person's real filing history, straight from SEC EDGAR. No third-party API, no black-box score.",
+  "main": "run.js",
+  "scripts": {
+    "start": "node run.js",
+    "lookup": "node lookup-cli.js"
+  },
+  "license": "MIT"
+}
