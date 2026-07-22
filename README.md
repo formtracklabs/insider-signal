@@ -12,7 +12,7 @@ Reading insider filings one at a time tells you almost nothing. A single sale co
 - `resolve.js` — resolves a plain company name, ticker, or person's name to a SEC CIK. Handles SEC's `Lastname Firstname` filer-name convention and disambiguates common names instead of guessing.
 - `format-alert.js` — turns a parsed filing + its history into a plain-language verdict (net buyer / net seller).
 - `lookup-cli.js` — on-demand free-snapshot lookup: `node lookup-cli.js "Clean Harbors"` or `node lookup-cli.js "Alan McKim"` (filing count + dates only).
-- `full-report.js` / `report-cli.js` — generates the actual paid report end-to-end from one command: `node report-cli.js "Alan McKim"`. Pulls the last 10 Form 4 filings, parses each one's real transaction detail, and produces the full ledger with a net buyer/seller verdict. If given a company/ticker with more than one distinct insider filing recently, it asks which specific person is meant instead of mixing unrelated people's transactions into one false "pattern."
+- `full-report.js` / `report-cli.js` — generates the actual paid report end-to-end from one command: `node report-cli.js "Alan McKim"`. Pulls the last 10 Form 4 filings, parses each one's real transaction detail, and produces a category summary, a deterministic one-line interpretation of the verdict (rule-based, never AI-generated — see `ARCHITECTURAL_DECISIONS.md` ADR-006), and the full ledger. If given a company/ticker with more than one distinct insider filing recently, it asks which specific person is meant instead of mixing unrelated people's transactions into one false "pattern."
 - `run.js` — continuous poller for new filings, writes dated output files.
 
 ## Data source
