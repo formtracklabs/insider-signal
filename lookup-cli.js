@@ -48,6 +48,10 @@ async function main() {
   console.log(`Total Form 4 filings on record: ${history.totalForm4Filings}`);
   console.log(`Most recent: ${history.mostRecentDates.slice(0, 5).join(', ')}`);
   console.log(`Earliest on record: ${history.firstKnownDate}`);
+  // Context only -- this is a filing-frequency count, not a buyer/seller
+  // verdict. lookup-cli.js never computes transaction types (that's
+  // report-cli.js's job), so this line must never imply one exists here.
+  console.log(`\nThis is how often they've had to report insider activity. The full $9 pattern breaks down every recent filing by type, shares, and price, with a plain buyer/seller verdict.`);
 }
 
 main().catch(e => { console.error('FATAL:', e.message); process.exit(1); });

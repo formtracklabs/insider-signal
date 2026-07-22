@@ -60,6 +60,42 @@ async function generateFullReport(query, limit = 10) {
   const purchases = rows.filter(r => r.transactionCode === 'P').length;
   const verdict = purchases > sales ? 'NET BUYER' : sales > purchases ? 'NET SELLER' : 'MIXED / NO CLEAR PATTERN';
 
+  // Deterministic category tally -- never AI-generated, per ADR-001. Buckets
+  // reflect what each SEC transaction code structurally *is* (compensation
+  // mechanics vs. a discretionary market trade), not any person's motive.
+  const CATEGORY_OF = { P: 'purchases', S: 'sales', M: 'exercises', X: 'exercises', O: 'exercises', A: 'grants', F: 'tax' };
+  const categoryLabel = { purchases: 'Open-market purchases', sales: 'Open-market sales', exercises: 'Option exercises', grants: 'Grants/awards', tax: 'Tax transactions', gifts: 'Gifts', other: 'Other' };
+  const tally = { purchases: 0, sales: 0, exercises: 0, grants: 0, tax: 0, gifts: 0, other: 0 };
+  for (const r of rows) {
+    if (r.error) continue;
+    const bucket = r.transactionCode === 'G' ? 'gifts' : (CATEGORY_OF[r.transactionCode] || 'other');
+    tally[bucket]++;
+  }
+  const summaryLines = Object.entries(tally)
+    .filter(([, count]) => count > 0)
+    .map(([key, count]) => `${categoryLabel[key]}: ${count}`);
+
+  // Deterministic interpretation -- describes what the transaction *types*
+  // structurally represent (compensation mechanics vs. a discretionary market
+  // trade), never why this specific person acted. Never speculates on intent
+  // or future performance, per EDITORIAL_INTEGRITY_POLICY.md condition 3.
+  let interpretation;
+  if (purchases > sales) {
+    interpretation = `${purchases} open-market purchase${purchases === 1 ? '' : 's'} against ${sales} sale${sales === 1 ? '' : 's'} across the last ${rows.length} filings. Purchases are comparatively uncommon among routine insider activity, since most Form 4 filings are compensation-related (grants, option exercises) rather than discretionary buying -- making a real purchase a relatively rare event in this data.`;
+  } else if (sales > purchases) {
+    interpretation = `${sales} open-market sale${sales === 1 ? '' : 's'} against ${purchases} purchase${purchases === 1 ? '' : 's'} across the last ${rows.length} filings -- a repeated pattern, not a single isolated sale.`;
+  } else if (sales > 0) {
+    interpretation = `${sales} open-market sale${sales === 1 ? '' : 's'} and ${purchases} open-market purchase${purchases === 1 ? '' : 's'} across the last ${rows.length} filings -- an even mix, with no dominant direction either way.`;
+  } else {
+    const dominant = Object.entries(tally)
+      .filter(([k]) => k !== 'purchases' && k !== 'sales')
+      .sort((a, b) => b[1] - a[1])
+      .filter(([, c]) => c > 0)
+      .slice(0, 2)
+      .map(([k]) => categoryLabel[k].toLowerCase());
+    interpretation = `No open-market purchases or sales were found in this window. Recent filings consist primarily of ${dominant.join(' and ') || 'non-market transactions'} -- transaction types that occur automatically as part of standard executive compensation, not discretionary market decisions.`;
+  }
+
   // Always prefer the real parsed filing data over the resolved query --
   // for a person query it matches anyway; for a company query with a single
   // consistent filer (the case that survives the check above), the person's
@@ -73,6 +109,11 @@ async function generateFullReport(query, limit = 10) {
     `FormTrack full pattern report`,
     `${ownerLabel} -- ${issuerLabel}`,
     `Verdict: ${verdict} (${sales} open-market sale${sales === 1 ? '' : 's'}, ${purchases} purchase${purchases === 1 ? '' : 's'}, out of the last ${rows.length} Form 4 filings)`,
+    '',
+    interpretation,
+    '',
+    'Summary',
+    ...summaryLines,
     '',
     'Date         Type                                              Shares      Price',
     '-----------  ------------------------------------------------  ----------  --------'
