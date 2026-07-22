@@ -13,6 +13,7 @@ Reading insider filings one at a time tells you almost nothing. A single sale co
 - `format-alert.js` — turns a parsed filing + its history into a plain-language verdict (net buyer / net seller).
 - `lookup-cli.js` — on-demand free-snapshot lookup: `node lookup-cli.js "Clean Harbors"` or `node lookup-cli.js "Alan McKim"` (filing count + dates only).
 - `full-report.js` / `report-cli.js` — generates the actual paid report end-to-end from one command: `node report-cli.js "Alan McKim"`. Pulls the last 10 Form 4 filings, parses each one's real transaction detail, and produces a category summary, a deterministic one-line interpretation of the verdict (rule-based, never AI-generated — see `ARCHITECTURAL_DECISIONS.md` ADR-006), and the full ledger. If given a company/ticker with more than one distinct insider filing recently, it asks which specific person is meant instead of mixing unrelated people's transactions into one false "pattern."
+- `render-html-report.js` / `html-report-cli.js` — the same report as a real styled document, not plain text: `node html-report-cli.js "Alan McKim"`. Reuses the landing page's exact design system (colors, fonts, sparkline logic); open-market purchase/sale rows render bold and color-tagged while routine compensation rows (grants, exercises, tax) recede, so the pattern is visible at a glance. Saves a self-contained HTML file — attach it directly, or print it to PDF locally. See ADR-007.
 - `run.js` — continuous poller for new filings, writes dated output files.
 
 ## Data source

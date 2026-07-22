@@ -133,7 +133,14 @@ async function generateFullReport(query, limit = 10) {
   return {
     status: 'found',
     text: lines.join('\n'),
-    meta: { kind, cik: resolved.cik, ticker: resolved.ticker || null, verdict, sales, purchases, filingCount: rows.length }
+    // Structured data alongside the plain-text rendering -- lets a second
+    // renderer (e.g. render-html-report.js) reuse the same computation
+    // instead of re-deriving verdict/tally/interpretation independently,
+    // which would risk the two ever disagreeing with each other.
+    meta: {
+      kind, cik: resolved.cik, ticker: resolved.ticker || null, verdict, sales, purchases,
+      filingCount: rows.length, ownerLabel, issuerLabel, interpretation, tally, categoryLabel, rows
+    }
   };
 }
 

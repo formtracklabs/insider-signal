@@ -1,3 +1,4 @@
 node_modules/
 data/seen.json
 data/alerts-*.txt
+data/report-*.html
